@@ -1,0 +1,6 @@
+
+tests:
+  "Basic tests":
+    GET /:
+      response:
+        status: 200

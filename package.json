@@ -4,5 +4,8 @@
         "http-bat": "0.1.0-alpha.0",
         "mocha": "^2.4.5",
         "express": "^4.13.4"
+    },
+    "scripts": {
+        "test": "mocha --reporter spec"
     }
 }
