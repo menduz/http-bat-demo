@@ -1,27 +1,346 @@
+#% BAT
+
+stores:
+  oauth:
+    accessToken: "EMPTY_VALUE"
+  ENV:
+    NODE_ENV: FAKE_ENV
+    PORT: 0
 
 tests:
-  "Basic tests":
-    GET /:
+  "Test 404 error":
+    GET /asjdnasjdnkasf:
+      description: Non existent resource must throw 404
+      response:
+        status: 404
+
+
+
+  "Another":
+    GET /hello?name=ERROR:
+      description: Url defined query string parameter must be replaced by dynamic qs.
+      queryParameters:
+        name: agusA
       response:
         status: 200
+        body:
+          is: "Hello agusA!"
+
+
+
+  "Another tests 1":
+    GET /status/200:
+      description: Response must be "Success" and status 200
+      response:
+        status: 200
+        body:
+         is: "Success"
+
+    POST /status/{status}:
+      description: "Defined request content-type. Dynamic uriParameters, sending 200"
+      uriParameters:
+        status: 200
+      request:
+        content-type: application/json
+      response:
+        status: 200
+        body:
+         is: "Success"
 
     GET /hello:
       description: Response must be "Hello World!"
       response:
+        status: 200
         body:
           is: "Hello World!"
 
-    GET /hello?name=Agustin:
-      description: Response must be "Hello Agustin!"
-      response:
-        body:
-          is: "Hello Agustin!"
 
-  "Dynamic queryParameters":
-    GET /hello:
-      description: Response must be "Hello ABC!"
+
+    GET /hello?name=agus:
+      description: Response must be "Hello agus!"
+      response:
+        status: 200
+        body:
+          is: "Hello agus!"
+
+
+
+  "Headers":
+    PUT /bounce/headers:
+      description: "Endpoint must validate headers also respond with request headers as body"
+      headers:
+        Authorization: test
+      response:
+        headers:
+          Access-Control-Allow-Headers: "Authorization, X-Default-Header, X-Custom-Header"
+        body:
+          matches:
+            authorization: test
+
+
+
+  "Text Response":
+    GET /responses/text:
+      description: "Response must equal to the last uriParameter"
+      response:
+        status: 200
+        body:
+          is: 'text'
+
+
+
+  "JSON Response":
+    GET /responses/json:
+      description: "Response must be a json like { json: true }"
+      response:
+        status: 200
+        body:
+          is: !!map { json: true }
+
+
+
+  "Regexp body":
+    GET /stream:
+      description: "Response must be a stream of Lorem ipsum .... Checking against RegExp"
+      response:
+        status: 200
+        body:
+          is: !!js/regexp /^Lorem/
+
+
+
+  "Url encoded responses":
+    GET /responses/url-encoded/basic:
+      description: "Response body must be encoded with url-encode. Must equal {'key': 'value'}"
+      response:
+        status: 200
+        content-type: application/x-www-form-urlencoded
+        body:
+          is:
+            key: value
+
+
+
+    GET /responses/url-encoded/duplicate:
+      description: "Response body must be encoded with url-encode. Must equal {'key': [ 1, 2, 3 ]}"
+      response:
+        status: 200
+        content-type: application/x-www-form-urlencoded
+        body:
+          is:
+            key: [ 1, 2, 3 ]
+
+
+
+    GET /responses/url-encoded/escaped:
+      description: "Response body must be encoded with url-encode. Must equal {'key': 'Hello, world!'}"
+      response:
+        status: 200
+        content-type: application/x-www-form-urlencoded
+        body:
+          is:
+            key: "Hello, world!"
+
+
+
+  "Post tests":
+    POST /post-body/json:
+      description: "Server must respond with the request body. Testing YAML references"
+      request:
+        json: &ref_value_json
+          string: "value"
+          number: 123
+      response:
+        status: 200
+        body:
+          is: *ref_value_json
+
+
+
+    POST /post-body/attach-file:
+      description: "Sending a file, Server must respond with an array like [{file: 'filename.txt'}]"
+      request:
+        attach:
+          - file: 'lorem.txt'
+      response:
+        status: 200
+        body:
+          is:
+            - file: lorem.txt
+
+
+
+    POST /post-body/attach-file?multiple:
+      description: "Sending multiple files, Server must respond with an array like [{file: 'filename.txt'}]"
+      request:
+        attach:
+          - file: 'lorem.txt'
+          - file: 'lorem.txt'
+          - "file-otherName": 'lorem.txt'
+      response:
+        status: 200
+        body:
+          is:
+            - file: 'lorem.txt'
+            - file: 'lorem.txt'
+            - "file-otherName": 'lorem.txt'
+
+
+
+    POST /post-body/url:
+      description: "Sending URL encoded payload, server must forward the request body as json"
+      request:
+        urlencoded: &form-data-1
+          - name: 'agustin'
+          - name: 'agustin'
+          - another: 123
+      response:
+        status: 200
+        body:
+          is: *form-data-1
+
+
+
+    POST /post-body/form:
+      description: "Sending URL encoded payload, server must forward the request body as json. Also the response body should appear on screen"
+      request:
+        form: &form-data-2
+          - name: 'agustin'
+          - name: 'agustin'
+          - another: 123string
+      response:
+        status: 200
+        body:
+          print: true
+          is: *form-data-2
+
+
+
+    POST /post-body/form-n-files:
+      description: "Mixing form fields and files"
+      request:
+        attach:
+          - file: 'lorem.txt'
+        form:
+          - name: 'agustin'
+          - name: 'agustin'
+          - another: 123string
+      response:
+        status: 200
+        print: true
+        body:
+          is:
+            - file: "lorem.txt"
+            - name: 'agustin'
+            - name: 'agustin'
+            - another: 123string
+
+
+
+  "Access control by token":
+    GET /secured_by_token#should-be-unauthorized:
+      description: "Sending an undefined accessToken (via queryParameters) throws 401"
       queryParameters:
-        name: ABC
+        accessToken: !!pointer oauth.accessToken
+      response:
+        status: 401
+
+    GET /secured_by_token/header#should-be-unauthorized:
+      description: "Sending an undefined accessToken (via header) throws 401"
+      headers:
+        Authorization: !!pointer oauth.accessToken
+      response:
+        status: 401
+
+
+
+    POST /get_access_token:
+      description: "Getting accessToken and storing it on !!pointer oauth.accessToken"
+      # responses { new_token: "asd" }
       response:
         body:
-          is: "Hello ABC!"
+          take: # take a value from body
+            - new_token: !!pointer oauth.accessToken
+
+
+    GET /secured_by_token:
+      description: "Doing the same request with a valid access token (via queryParameters) must return {success: true} and status 200"
+      queryParameters:
+        accessToken: !!pointer oauth.accessToken
+      response:
+        status: 200
+        body:
+          is:
+            success: true
+
+
+    GET /secured_by_token/header:
+      description: "Doing the same request with a valid access token (via header) must return {success: true} and status 200"
+      headers:
+        Authorization: !!pointer oauth.accessToken
+      response:
+        status: 200
+        body:
+          is:
+            success: true
+
+    POST /get_access_token#whole:
+      description: "Getting an entire object into store !!pointer new_auth"
+      response:
+        body:
+          take: !!pointer new_auth
+
+    GET /secured_by_token/header#new_token:
+      description: "Using header Authorization from !!pointer new_auth.new_token must return  {success: true} and status 200"
+      headers:
+        Authorization: !!pointer new_auth.new_token
+      response:
+        status: 200
+        body:
+          is:
+            success: true
+
+  "Uri parameters":
+    GET /users:
+      description: "Obtain the list of users, take the second one into !!pointer second_user. Also 'first_user.id' must be a valid number"
+      response:
+        status: 200
+        body:
+          take:
+            - "[1]": !!pointer second_user
+          matches:
+            "[0].id": !!js/regexp ([0-9]+)
+
+
+
+    GET /users/{id}:
+      description: "Get an user by ID, id taken from !!pointer 'second_user.id'. Response.id and Response.name must match '!!pointer second_user.id' and '!!pointer second_user.name'"
+      uriParameters:
+        id: !!pointer second_user.id
+      response:
+        status: 200
+        body:
+          matches:
+            id: !!pointer second_user.id
+            name: !!pointer second_user.name
+
+
+
+    GET /users#FirstUserThisTime:
+      response:
+        status: 200
+        body:
+          take:
+            - "[0]": !!pointer first_user
+
+
+
+    GET /users/{user_id}:
+      uriParameters:
+        user_id: !!pointer first_user.id
+      response:
+        status: 200
+        body:
+          matches:
+            id: !!pointer first_user.id
+            name: !!pointer first_user.name
