@@ -7,5 +7,5 @@
  - Done.  
 
 ## Files
- - **`test/test1.bat.yml`** All the tests of this project
+ - **`test/test1.bat.yml`** All the tests
  - **`app.js`** contains a base server definition to fullfill all the test scenarios of `test/test1.bat.yml`
