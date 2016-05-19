@@ -4,3 +4,9 @@ tests:
     GET /:
       response:
         status: 200
+
+    GET /hello:
+      description: Response must be "Hello World!"
+      response:
+        body:
+          is: "Hello World!"

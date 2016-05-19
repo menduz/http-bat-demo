@@ -8,6 +8,23 @@ app.get('/', function (req, res) {
 });
 
 /**
+ * Say hello!
+ */
+app.all('/hello', function (req, res) {
+  return res.send('Hello ' + (req.query.name || 'World') + '!')
+})
+
+
+
+
+
+
+
+
+
+
+
+/**
  * Listen to a port if the module wasn't required.
  */
 if (!module.parent) {
