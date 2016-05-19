@@ -1,7 +1,7 @@
 # Demo for [`http-bat`](https://github.com/mulesoft-labs/http-bat)
 
 ## Instructions
- - Clone this remo  
+ - Clone this repo  
  - Run `npm install`  
  - Run `npm run test`  
  - Done.  
