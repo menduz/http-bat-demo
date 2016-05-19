@@ -10,3 +10,18 @@ tests:
       response:
         body:
           is: "Hello World!"
+
+    GET /hello?name=Agustin:
+      description: Response must be "Hello Agustin!"
+      response:
+        body:
+          is: "Hello Agustin!"
+
+  "Dynamic queryParameters":
+    GET /hello:
+      description: Response must be "Hello ABC!"
+      queryParameters:
+        name: ABC
+      response:
+        body:
+          is: "Hello ABC!"
